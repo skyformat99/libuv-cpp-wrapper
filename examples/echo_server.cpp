@@ -1,8 +1,7 @@
 #include <iostream>
 #include <uv++.hpp>
 
-int
-main()
+int main()
 {
     uv::loop default_loop;
     uv::handle::tcp tcp(&default_loop);
@@ -15,6 +14,12 @@ main()
 
         uv::handle::stream *s = client->copy_stream();
         s->read_start([&default_loop](uv::handle::stream *stream, ssize_t nread, uv::buf *buf) {
+            if (nread == -1) {
+                stream->close();
+                return;
+            }
+
+            std::cout << "read: " << buf->tostring();
             stream->write(buf->tostring(), [](int status) {
             });
         });

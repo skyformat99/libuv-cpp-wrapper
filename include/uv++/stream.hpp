@@ -20,6 +20,7 @@ class stream : public handle
 public:
     typedef std::function<void(stream*, ssize_t, buf*)> read_cb;
     typedef std::function<void(int status)> write_cb;
+    typedef std::function<void(stream*)> close_cb;
 
     stream() : _handle(new uv_stream_t), _write_req(new uv_write_t) {}
     stream(uv_stream_t *s) : _handle(s), _write_req(new uv_write_t) {}
@@ -60,11 +61,27 @@ public:
         uv_read_stop(_handle);
     }
 
+    void close(close_cb cb = NULL) {
+        if (cb) {
+            _on_close = cb;
+            _handle->data = static_cast<void*>(this);
+        }
+
+        uv_close((uv_handle_t*) _handle, [](uv_handle_t *h) {
+            auto handle = static_cast<uv::handle::stream*>(h->data);
+            if (handle) {
+                auto cb = handle->_on_close;
+                cb(handle);
+            }
+        });
+    }
+
 protected:
     uv_stream_t *_handle;
     uv_write_t *_write_req;
     read_cb _on_read;
     write_cb _on_write;
+    close_cb _on_close;
 };
 
 }

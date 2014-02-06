@@ -85,6 +85,26 @@ public:
             throw std::runtime_error("ERROR BIND");
     }
 
+    void bind(ip6 &ipv, int flags = 0)
+    {
+        int err = ::uv_tcp_bind(_handle, &ipv.bind().addr, 0);
+        if (err != 0) 
+            throw std::runtime_error("ERROR BIND");
+    }
+
+    void connect(ip4 &ipv, connection_cb cb)
+    {
+        _connect = new uv_connect_t;
+        _on_connection = cb;
+        _connect->data = static_cast<void*>(this);
+        uv_tcp_connect(_connect, _handle, &ipv.bind().addr, 
+        [](uv_connect_t* c, int status) {
+            auto handle = static_cast<uv::handle::tcp*>(c->data);
+            auto cb = handle->_on_connection;
+            cb(handle, status);
+        });
+    }
+
     void listen(int backlog, connection_cb cb) 
     {
         _on_connection = cb;
@@ -118,6 +138,7 @@ public:
 
 protected:
     uv_tcp_t *_handle;
+    uv_connect_t *_connect;
     connection_cb _on_connection;
     close_cb _on_close;
 };

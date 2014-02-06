@@ -11,3 +11,14 @@
 *.lai
 *.la
 *.a
+
+# Editor files
+*.swp
+
+# Other files
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+examples/client
+examples/echo_server
